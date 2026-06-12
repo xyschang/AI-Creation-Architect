@@ -1,7 +1,28 @@
 # AI Creation Architect
 
+## 首頁畫面
+
 ![首頁](docs/images/homepage.png)
 
+## 需求澄清模式
+
+![需求澄清](docs/images/clarify-mode.png)
+
+## AI顧問模式
+
+![AI顧問](docs/images/consultant-mode.png)
+
+## 圖片提示詞模式
+
+![圖片模式](docs/images/image-mode.png)
+
+## Vision AI 分析
+
+![Vision](docs/images/vision-analysis.png)
+
+## 專案管理
+
+![Project](docs/images/project-management.png)
 ## 專案介紹
 
 AI Creation Architect 是一個將模糊想法轉換成清楚需求、生成藍圖與完整提示詞的 AI 輔助系統。
