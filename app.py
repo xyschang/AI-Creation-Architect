@@ -68,7 +68,7 @@ def reset_chat():
     conversation_history = ""
     character_profile = ""
     uploaded_images = []
-    
+
     return jsonify({"message": "對話已重置"})
 @app.route("/load_project", methods=["POST"])
 def load_project_api():
@@ -256,4 +256,8 @@ def generate_prompt_api():
         "prompt": result
     })
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=True
+    )
