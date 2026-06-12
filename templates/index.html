@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Creation Architect</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="app">
+    <div class="main-panel">
+        <div class="project-panel">
+            <h2>我的專案</h2>
+            <input id="projectNameInput" class="project-input" placeholder="輸入專案名稱">
+            <button onclick="saveProject()">儲存專案</button>
+            <button onclick="loadProjects()">重新整理</button>
+
+            <div id="projectList" class="project-list">
+            尚未載入專案
+            </div>
+        </div>
+        <h1>AI Creation Architect</h1>
+        <p class="subtitle">把模糊想法整理成生成藍圖、流程方案與完整提示詞</p>
+
+        <div class="mode-box">
+            <label>選擇模式：</label>
+            <select id="mode">
+                <option value="consultant">AI 顧問模式</option>
+                <option value="clarify" selected>需求澄清模式</option>
+                <option value="image">圖片提示詞模式</option>
+            </select>
+            <button onclick="resetChat()">重置對話</button>
+        </div>
+        <div id="imageUploadArea">
+            <div class="upload-box">
+                <label>上傳參考圖片：</label>
+                <input type="file" id="imageInput" multiple accept="image/*">
+                <button onclick="uploadImages()">上傳圖片</button>
+            </div>
+
+            <div id="previewBox" class="preview-box"></div>
+        </div>
+
+        <div id="previewBox" class="preview-box"></div>
+        <div id="chatBox" class="chat-box">
+            <div class="ai-message">
+                你好，我可以幫你把模糊想法整理成更清楚的需求。請先輸入你的想法。
+            </div>
+        </div>
+
+        <div class="input-box">
+            <textarea id="messageInput" placeholder="例如：我想生成一個在太空飛的鯊魚，但不知道怎麼描述"></textarea>
+            <button onclick="sendMessage()">送出</button>
+            <button onclick="copyLastReply()">複製最後回答</button>
+        </div>
+    </div>
+
+    <div class="side-panel">
+        <h2>目前生成藍圖</h2>
+        <p class="side-note">圖片提示詞模式與 Vision AI 會自動整理生成藍圖。</p>
+
+        <div id="characterProfile" class="profile-box">
+            <div class="blueprint-section">
+                <h3>主體藍圖</h3>
+                <pre id="subjectBlueprint">尚未建立</pre>
+            </div>
+
+         <div class="blueprint-section">
+                <h3>風格藍圖</h3>
+                <pre id="styleBlueprint">尚未建立</pre>
+            </div>
+
+            <div class="blueprint-section">
+            <h3>場景藍圖</h3>
+                <pre id="sceneBlueprint">尚未建立</pre>
+            </div>
+
+            <div class="blueprint-section">
+                <h3>固定規則</h3>
+                <pre id="fixedRules">尚未建立</pre>
+            </div>
+        </div>
+
+        <button class="copy-btn" onclick="copyCharacterProfile()">複製生成藍圖</button>
+        <button class="copy-btn" onclick="generatePrompt()">產生完整提示詞</button>
+    </div>
+</div>
+
+<script>
+function updateProfileVisibility() {
+    const mode = document.getElementById("mode").value;
+    const sidePanel = document.querySelector(".side-panel");
+    const imageUploadArea = document.getElementById("imageUploadArea");
+
+    if (mode === "image") {
+        sidePanel.style.display = "block";
+        imageUploadArea.style.display = "block";
+    } else {
+        sidePanel.style.display = "none";
+        imageUploadArea.style.display = "none";
+    }
+}
+
+document.getElementById("mode").addEventListener("change", async function () {
+    await resetChat();
+    updateProfileVisibility();
+});
+
+async function sendMessage() {
+    const mode = document.getElementById("mode").value;
+    const input = document.getElementById("messageInput");
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    addMessage(message, "user-message");
+    input.value = "";
+
+    addMessage("AI 顧問思考中...", "ai-message loading");
+
+    const response = await fetch("/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            mode: mode,
+            message: message
+        })
+    });
+
+    const data = await response.json();
+
+    removeLoading();
+    addMessage(data.reply, "ai-message");
+    lastReply = data.reply;
+
+    if (mode === "image" && data.character_profile && data.character_profile.trim() !== "") {
+        renderBlueprint(data.character_profile);
+    }
+
+    updateProfileVisibility();
+}
+
+function addMessage(text, className) {
+
+    const chatBox = document.getElementById("chatBox");
+
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "message-wrapper";
+
+    const div = document.createElement("div");
+
+    div.className = className;
+    div.innerText = text;
+
+    wrapper.appendChild(div);
+
+    if (className === "ai-message") {
+
+        const copyBtn = document.createElement("button");
+
+        copyBtn.innerText = "複製回答";
+
+        copyBtn.className = "message-copy-btn";
+
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(text);
+            alert("回答已複製");
+        };
+
+        wrapper.appendChild(copyBtn);
+    }
+
+    chatBox.appendChild(wrapper);
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function removeLoading() {
+    const loading = document.querySelector(".loading");
+    if (loading) loading.remove();
+}
+
+async function resetChat() {
+    await fetch("/reset", {
+        method: "POST"
+    });
+
+    document.getElementById("chatBox").innerHTML = `
+        <div class="ai-message">
+            對話已重置。請重新輸入你的需求。
+        </div>
+    `;
+
+    renderBlueprint("");
+    alert("專案已刪除：" + data.project_name);
+    document.getElementById("previewBox").innerHTML = "";
+    document.getElementById("imageInput").value = "";
+    updateProfileVisibility();
+    alert("專案已刪除：" + data.project_name);
+}
+let lastReply = "";
+
+function copyText(text) {
+    navigator.clipboard.writeText(text);
+    alert("已複製");
+}
+
+function copyCharacterProfile() {
+    const text = `
+【主體藍圖】
+${document.getElementById("subjectBlueprint").innerText}
+
+【風格藍圖】
+${document.getElementById("styleBlueprint").innerText}
+
+【場景藍圖】
+${document.getElementById("sceneBlueprint").innerText}
+
+【固定規則】
+${document.getElementById("fixedRules").innerText}
+`;
+
+    copyText(text);
+}
+
+function copyLastReply() {
+    if (!lastReply) {
+        alert("目前還沒有 AI 回答可以複製");
+        return;
+    }
+
+    copyText(lastReply);
+}
+
+function renderConversationHistory(historyText) {
+    if (!historyText || historyText.trim() === "") {
+        return;
+    }
+
+    const chatBox = document.getElementById("chatBox");
+
+    const parts = historyText.split(/(?=使用者：|AI顧問：)/g);
+
+    parts.forEach(part => {
+        const text = part.trim();
+
+        if (!text) return;
+
+        if (text.startsWith("使用者：")) {
+            addMessage(
+                text.replace("使用者：", "").trim(),
+                "user-message"
+            );
+        }
+
+        else if (text.startsWith("AI顧問：")) {
+            addMessage(
+                text.replace("AI顧問：", "").trim(),
+                "ai-message"
+            );
+        }
+    });
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+async function loadProjects() {
+    const response = await fetch("/projects");
+    const data = await response.json();
+
+    const projectList = document.getElementById("projectList");
+
+    if (!data.projects || data.projects.length === 0) {
+        projectList.innerHTML = "目前沒有專案";
+        return;
+    }
+
+    projectList.innerHTML = "";
+
+    data.projects.forEach(project => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "project-item";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.innerText = project;
+
+        nameSpan.onclick = async function () {
+            await loadProject(project);
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerText = "刪除";
+        deleteBtn.className = "delete-project-btn";
+
+        deleteBtn.onclick = async function (event) {
+            event.stopPropagation();
+
+            const confirmed = confirm("確定要刪除專案「" + project + "」嗎？");
+
+            if (!confirmed) return;
+
+            await deleteProject(project);
+        };
+
+        wrapper.appendChild(nameSpan);
+        wrapper.appendChild(deleteBtn);
+
+        projectList.appendChild(wrapper);
+    });
+}
+
+window.addEventListener("load", loadProjects);
+
+async function loadProject(projectName) {
+    const response = await fetch("/load_project", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            project_name: projectName
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    document.getElementById("characterProfile").innerText =
+        data.character_profile || "尚未建立生成藍圖。";
+
+    const previewBox = document.getElementById("previewBox");
+    previewBox.innerHTML = "";
+
+    if (data.uploaded_images && data.uploaded_images.length > 0) {
+        data.uploaded_images.forEach(url => {
+            const img = document.createElement("img");
+            img.src = url;
+            img.className = "preview-img";
+            previewBox.appendChild(img);
+        });
+    }    
+    const chatBox = document.getElementById("chatBox");
+    chatBox.innerHTML = `
+        <div class="ai-message">
+            已載入專案：${projectName}
+        </div>
+    `;
+
+renderConversationHistory(data.conversation_history);
+}
+async function saveProject() {
+    const projectName = document.getElementById("projectNameInput").value.trim();
+
+    if (!projectName) {
+        alert("請輸入專案名稱");
+        return;
+    }
+
+    const response = await fetch("/save_project", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            project_name: projectName
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    alert("專案已儲存：" + data.project_name);
+
+    await loadProjects();
+}
+
+async function deleteProject(projectName) {
+    const response = await fetch("/delete_project", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            project_name: projectName
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    alert("專案已刪除：" + data.project_name);
+
+    await loadProjects();
+}
+
+async function uploadImages() {
+    const input = document.getElementById("imageInput");
+    const files = input.files;
+
+    if (files.length === 0) {
+        alert("請先選擇圖片");
+        return;
+    }
+
+    const formData = new FormData();
+
+    for (let file of files) {
+        formData.append("images", file);
+    }
+
+    const response = await fetch("/upload_images", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    const previewBox = document.getElementById("previewBox");
+    previewBox.innerHTML = "";
+
+    data.images.forEach(url => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "preview-wrapper";
+
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "preview-img";
+
+        const btn = document.createElement("button");
+        btn.innerText = "分析";
+        btn.className = "analyze-btn";
+        btn.onclick = function () {
+            analyzeImage(url);
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(btn);
+        previewBox.appendChild(wrapper);
+    });
+
+    alert("圖片上傳成功");
+}
+
+async function analyzeImage(imageUrl) {
+    addMessage("Vision AI 正在分析圖片...", "ai-message loading");
+
+    const response = await fetch("/analyze_image", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            image_url: imageUrl
+        })
+    });
+
+    const data = await response.json();
+
+    removeLoading();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    addMessage(data.analysis, "ai-message");
+    if (data.character_profile && data.character_profile.trim() !== "") {
+        renderBlueprint(data.character_profile);
+    }
+}
+
+async function generatePrompt() {
+    addMessage("AI 正在根據生成藍圖產生完整提示詞...", "ai-message loading");
+
+    const response = await fetch("/generate_prompt", {
+        method: "POST"
+    });
+
+    const data = await response.json();
+
+    removeLoading();
+
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
+
+    addMessage(data.prompt, "ai-message");
+}
+
+function parseBlueprint(text) {
+    const sections = {
+        subject: "",
+        style: "",
+        scene: "",
+        fixed: ""
+    };
+
+    if (!text) return sections;
+
+    const subjectMatch = text.match(/【主體藍圖】([\s\S]*?)(?=【風格藍圖】|$)/);
+    const styleMatch = text.match(/【風格藍圖】([\s\S]*?)(?=【場景藍圖】|$)/);
+    const sceneMatch = text.match(/【場景藍圖】([\s\S]*?)(?=【固定規則】|$)/);
+    const fixedMatch = text.match(/【固定規則】([\s\S]*?)(?=【本次圖片提示詞】|【完整提示詞】|$)/);
+
+    sections.subject = subjectMatch ? subjectMatch[1].trim() : "尚未建立";
+    sections.style = styleMatch ? styleMatch[1].trim() : "尚未建立";
+    sections.scene = sceneMatch ? sceneMatch[1].trim() : "尚未建立";
+    sections.fixed = fixedMatch ? fixedMatch[1].trim() : "尚未建立";
+
+    return sections;
+}
+
+
+function renderBlueprint(text) {
+    const sections = parseBlueprint(text);
+
+    document.getElementById("subjectBlueprint").innerText = sections.subject;
+    document.getElementById("styleBlueprint").innerText = sections.style;
+    document.getElementById("sceneBlueprint").innerText = sections.scene;
+    document.getElementById("fixedRules").innerText = sections.fixed;
+}
+</script>
+
+</body>
+</html>
