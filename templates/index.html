@@ -24,7 +24,9 @@
 
         <div class="mode-box">
             <label>選擇模式：</label>
+            <p id="intentStatus" class="intent-status">目前：自動判斷模式</p>
             <select id="mode">
+                <option value="auto" selected>自動判斷模式</option>
                 <option value="consultant">AI 顧問模式</option>
                 <option value="clarify" selected>需求澄清模式</option>
                 <option value="image">圖片提示詞模式</option>
@@ -56,8 +58,8 @@
     </div>
 
     <div class="side-panel">
-        <h2>目前生成藍圖</h2>
-        <p class="side-note">圖片提示詞模式與 Vision AI 會自動整理生成藍圖。</p>
+        <h2 id="blueprintTitle">目前生成藍圖</h2>
+        <p id="blueprintNote" class="side-note">AI 會依照你的需求自動整理對應藍圖。</p>
 
         <div id="characterProfile" class="profile-box">
             <div class="blueprint-section">
@@ -92,9 +94,12 @@ function updateProfileVisibility() {
     const sidePanel = document.querySelector(".side-panel");
     const imageUploadArea = document.getElementById("imageUploadArea");
 
-    if (mode === "image") {
+    if (
+        blueprintType === "image" ||
+        blueprintType === "workflow" ||
+        blueprintType === "startup"
+    ) {
         sidePanel.style.display = "block";
-        imageUploadArea.style.display = "block";
     } else {
         sidePanel.style.display = "none";
         imageUploadArea.style.display = "none";
@@ -130,16 +135,30 @@ async function sendMessage() {
     });
 
     const data = await response.json();
-
+    const blueprintType = data.blueprint_type || "general";
+    updateBlueprintTitle(blueprintType);
+    updateIntentStatus(blueprintType);
+    const realMode = data.detected_mode || mode
     removeLoading();
     addMessage(data.reply, "ai-message");
     lastReply = data.reply;
 
-    if (mode === "image" && data.character_profile && data.character_profile.trim() !== "") {
-        renderBlueprint(data.character_profile);
+    const sidePanel = document.querySelector(".side-panel");
+
+    if (blueprintType === "image") {
+        sidePanel.style.display = "block";
+    }
+    else {
+        sidePanel.style.display = "none";
     }
 
-    updateProfileVisibility();
+    if (data.blueprint &&
+        data.blueprint.trim() !== ""
+    ) {
+        renderBlueprint(data.blueprint);
+    }
+
+    //updateProfileVisibility();
 }
 
 function addMessage(text, className) {
@@ -333,7 +352,7 @@ async function loadProject(projectName) {
     }
 
     document.getElementById("characterProfile").innerText =
-        data.character_profile || "尚未建立生成藍圖。";
+        data.blueprint || "尚未建立生成藍圖。";
 
     const previewBox = document.getElementById("previewBox");
     previewBox.innerHTML = "";
@@ -379,7 +398,7 @@ async function saveProject() {
         alert(data.error);
         return;
     }
-
+    cleanBrokenImages();
     alert("專案已儲存：" + data.project_name);
 
     await loadProjects();
@@ -484,8 +503,8 @@ async function analyzeImage(imageUrl) {
     }
 
     addMessage(data.analysis, "ai-message");
-    if (data.character_profile && data.character_profile.trim() !== "") {
-        renderBlueprint(data.character_profile);
+    if (data.blueprint && data.blueprint.trim() !== "") {
+        renderBlueprint(data.blueprint);
     }
 }
 
@@ -539,6 +558,58 @@ function renderBlueprint(text) {
     document.getElementById("styleBlueprint").innerText = sections.style;
     document.getElementById("sceneBlueprint").innerText = sections.scene;
     document.getElementById("fixedRules").innerText = sections.fixed;
+}
+
+function cleanBrokenImages() {
+    const images = document.querySelectorAll("img");
+
+    images.forEach(img => {
+        img.onerror = function () {
+            this.parentElement?.remove();
+        };
+
+        if (!img.complete || img.naturalWidth === 0) {
+            this?.parentElement?.remove();
+        }
+    });
+}
+function updateBlueprintTitle(blueprintType) {
+    const title = document.getElementById("blueprintTitle");
+    const note = document.getElementById("blueprintNote");
+
+    if (blueprintType === "image") {
+        title.innerText = "目前生成藍圖";
+        note.innerText = "圖片創作需求會整理成主體、風格、場景與固定規則。";
+    }
+
+    else if (blueprintType === "workflow") {
+        title.innerText = "目前流程藍圖";
+        note.innerText = "自動化需求會整理成流程、痛點、工具與下一步。";
+    }
+
+    else if (blueprintType === "startup") {
+        title.innerText = "目前創業藍圖";
+        note.innerText = "創業需求會整理成客群、痛點、解決方案與 MVP。";
+    }
+
+    else {
+        title.innerText = "目前藍圖";
+        note.innerText = "AI 會依照你的需求自動整理對應藍圖。";
+    }
+}
+
+function updateIntentStatus(blueprintType) {
+    const status = document.getElementById("intentStatus");
+
+    if (blueprintType === "image") {
+        status.innerText = "AI 已判斷：圖片創作需求";
+    } else if (blueprintType === "workflow") {
+        status.innerText = "AI 已判斷：自動化流程需求";
+    } else if (blueprintType === "startup") {
+        status.innerText = "AI 已判斷：創業 / 產品需求";
+    } else {
+        status.innerText = "AI 已判斷：一般需求整理";
+    }
 }
 </script>
 

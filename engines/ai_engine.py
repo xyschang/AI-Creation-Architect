@@ -24,7 +24,7 @@ def ask_ai(role_name, role_prompt, user_message, conversation_history, previous_
 你的任務：
 {role_prompt}
 
-目前生成藍圖：
+目前藍圖：
 {character_profile}
 
 歷史對話：
@@ -53,15 +53,21 @@ def ask_ai(role_name, role_prompt, user_message, conversation_history, previous_
 
 
 def summarize_answers(mode_display_name, user_message, conversation_history, all_answers, character_profile=""):
+
     if mode_display_name == "圖片提示詞模式":
         task_rule = """
 你的任務：
-1. 整理或更新「生成藍圖」
-2. 產生「本次圖片提示詞」
-3. 讓後續圖片可以維持同一個主體、風格、場景或重要特徵
-4. 使用者後續補充時，要更新原本生成藍圖，而不是重新開始
+請把圖片創作需求整理成 Image Generation Blueprint。
 
 請用以下格式回答：
+【主體優先級】
+- 主要主體：
+- 主體類型：
+- 主體權重：
+- 次要主體：
+- 背景權重：
+- 是否有人物：
+- 禁止替換主體：
 
 【主體藍圖】
 - 主體類型：
@@ -76,6 +82,16 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 - 光線：
 - 質感：
 - 整體氛圍：
+
+【構圖藍圖】
+- 主體位置：
+- 主體朝向：
+- 鏡頭角度：
+- 拍攝高度：
+- 拍攝距離：
+- 畫面比例：
+- 主體佔畫面比例：
+- 景深效果：
 
 【場景藍圖】
 - 場景位置：
@@ -97,40 +113,82 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 2. ...
 3. ...
 """
-    else:
+
+    elif mode_display_name == "AI 顧問模式":
         task_rule = """
 你的任務：
-1. 把使用者模糊的需求整理成清楚方向
-2. 優先告訴使用者現在該怎麼做
-3. 如果資訊不足，只問最重要的 1 到 3 個問題
-4. 使用者後續補充時，要把新內容加入原本需求中，而不是重新開始
+請把自動化、系統開發或工作流程需求整理成 Workflow Blueprint。
 
 請用以下格式回答：
 
-我先幫你整理成這樣：
+【流程藍圖】
+- 目前流程：
+- 主要痛點：
+- 重複性工作：
+- 資料來源：
+- 輸出結果：
 
-【目前理解】
-...
+【自動化藍圖】
+- 可自動化步驟：
+- 推薦工具：
+- 技術方向：
+- 第一版 MVP：
+
+【風險與限制】
+- 可能風險：
+- 缺少資訊：
+- 需要確認的問題：
 
 【建議下一步】
 1. ...
 2. ...
 3. ...
+"""
 
-【你可以再補充】
+    else:
+        task_rule = """
+你的任務：
+請把使用者的模糊想法整理成需求藍圖。
+
+如果使用者是在講創業、APP、產品或服務，請偏向 Startup Blueprint。
+如果只是一般模糊需求，請偏向一般需求整理。
+
+請用以下格式回答：
+
+【需求藍圖】
+- 目標：
+- 使用者/對象：
+- 核心問題：
+- 想達成的結果：
+
+【解決方案藍圖】
+- 可能方案：
+- 核心功能：
+- 第一版 MVP：
+- 差異化特色：
+
+【風險與限制】
+- 可能風險：
+- 缺少資訊：
+- 需要確認的問題：
+
+【建議下一步】
 1. ...
 2. ...
 3. ...
 """
 
     prompt = f"""
-你是 AI 需求整理顧問。
+你是 AI Creation Architect。
 
 目前模式：
 {mode_display_name}
 
-目前生成藍圖：
+目前藍圖：
 {character_profile}
+請注意：
+如果目前藍圖已有內容，請以目前藍圖為主，不要重新開始。
+使用者最新訊息通常是在補充或修改原本需求。
 
 歷史對話：
 {conversation_history}
@@ -146,11 +204,13 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 回答規則：
 1. 不要提到有多個 AI
 2. 不要顯示內部分析過程
-3. 不要一次問太多問題
-4. 回答不要太長
-5. 用繁體中文
-6. 語氣要像助理，不要像問卷
-7. 如果已有生成藍圖，要優先保留原本設定，只加入使用者新補充的內容
+3. 回答不要太長
+4. 用繁體中文
+5. 語氣要像助理，不要像問卷
+6. 如果目前藍圖不是空的，請把它當成主要資料來源
+7. 使用者最新訊息只代表新增、修改或刪除某些內容
+8. 不要重新建立整份藍圖
+9. 請保留原本藍圖中沒有被使用者明確修改的部分
 """
 
     response = chat(
@@ -163,9 +223,11 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
     return response["message"]["content"]
 
 
-def extract_character_profile(reply):
+def extract_blueprint(reply):
     start_markers = [
         "【主體藍圖】",
+        "【流程藍圖】",
+        "【需求藍圖】",
         "【生成藍圖】",
         "【角色卡】"
     ]
@@ -180,12 +242,24 @@ def extract_character_profile(reply):
     if start == -1:
         return ""
 
-    end = reply.find("【本次圖片提示詞】")
+    end_markers = [
+        "【本次圖片提示詞】",
+        "【建議下一步】",
+        "【你可以再補充】"
+    ]
 
-    if end == -1:
-        return reply[start:].strip()
+    end_positions = []
 
-    return reply[start:end].strip()
+    for marker in end_markers:
+        pos = reply.find(marker)
+        if pos != -1 and pos > start:
+            end_positions.append(pos)
+
+    if end_positions:
+        end = min(end_positions)
+        return reply[start:end].strip()
+
+    return reply[start:].strip()
 
 
 def run_ai_round(mode_name, user_message, conversation_history, character_profile=""):
@@ -215,10 +289,9 @@ def run_ai_round(mode_name, user_message, conversation_history, character_profil
 
     updated_character_profile = character_profile
 
-    if mode_name == "image":
-        new_profile = extract_character_profile(final_answer)
+    new_blueprint = extract_blueprint(final_answer)
 
-        if new_profile:
-            updated_character_profile = new_profile
+    if new_blueprint:
+        updated_character_profile = new_blueprint
 
     return final_answer, updated_character_profile

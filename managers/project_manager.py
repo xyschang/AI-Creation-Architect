@@ -9,7 +9,9 @@ os.makedirs(PROJECT_FOLDER, exist_ok=True)
 def save_project(
     project_name,
     conversation_history,
-    character_profile,
+    image_blueprint="",
+    workflow_blueprint="",
+    startup_blueprint="",
     uploaded_images=None
 ):
 
@@ -19,7 +21,9 @@ def save_project(
     data = {
         "project_name": project_name,
         "conversation_history": conversation_history,
-        "character_profile": character_profile,
+        "image_blueprint": image_blueprint,
+        "workflow_blueprint": workflow_blueprint,
+        "startup_blueprint": startup_blueprint,
         "uploaded_images": uploaded_images
     }
 
