@@ -33,9 +33,39 @@
 
         <section class="quick-actions">
             <button onclick="quickFill('我想生成一張圖片，但不知道怎麼描述')">🎨 生成圖片</button>
-            <button onclick="quickFill('我想把工作流程自動化')">⚙️ 自動化流程</button>
+            <button onclick="quickFill('我想把工作流程自動化，例如每週手動整理報表')">⚙️ 自動化流程</button>
             <button onclick="quickFill('我想整理一個創業或產品想法')">🚀 創業需求</button>
+            <button onclick="showTemplates()">📋 需求範本</button>
         </section>
+
+        <!-- 需求範本浮層 -->
+        <div id="templateModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; display:flex; align-items:center; justify-content:center;">
+            <div style="background:#1e1e1e; border:1px solid #333; border-radius:16px; padding:24px; width:min(560px,92%); max-height:80vh; overflow-y:auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="font-size:16px; color:#f0f0f0; margin:0;">📋 選擇需求範本</h3>
+                    <button onclick="hideTemplates()" style="background:transparent; border:none; color:#888; font-size:20px; cursor:pointer;">✕</button>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="template-group">
+                        <p class="template-group-title">🎨 圖片生成</p>
+                        <button class="template-btn" onclick="useTemplate('我想生成電商用的產品圖，背景乾淨，光線專業，突出產品細節')">電商產品圖</button>
+                        <button class="template-btn" onclick="useTemplate('我想生成 Instagram 用的視覺圖，風格現代，色彩吸引人')">社群貼文視覺</button>
+                        <button class="template-btn" onclick="useTemplate('我想設計一個角色，需要固定外觀設定，之後要生成多張不同場景的圖')">角色設計</button>
+                    </div>
+                    <div class="template-group">
+                        <p class="template-group-title">⚙️ 自動化流程</p>
+                        <button class="template-btn" onclick="useTemplate('我想把每週手動整理 Excel 報表的工作自動化，資料來源是系統匯出的 CSV')">Excel 自動化</button>
+                        <button class="template-btn" onclick="useTemplate('我想自動化客戶詢問的 Email 回覆流程，依照詢問類型分類並回覆')">Email 自動回覆</button>
+                        <button class="template-btn" onclick="useTemplate('我想把多個來源的資料自動整合到一個地方，定時更新並通知團隊')">資料收集整合</button>
+                    </div>
+                    <div class="template-group">
+                        <p class="template-group-title">🚀 創業 / 產品</p>
+                        <button class="template-btn" onclick="useTemplate('我想做一個 APP，解決某個生活問題，需要整理成完整的產品計畫')">APP 創業</button>
+                        <button class="template-btn" onclick="useTemplate('我想做一個 SaaS 工具，幫助特定族群解決重複性工作，需要商業模式建議')">SaaS 產品</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="control-bar">
             <select id="mode">
@@ -102,6 +132,7 @@
         <button class="action-btn" onclick="generatePrompt()">✨ 產生完整提示詞</button>
         <button class="action-btn" onclick="analyzeAndGeneratePrompt()">🚀 分析並產生提示詞</button>
         <button class="action-btn generate-image-btn" onclick="generateImage()">🎨 一鍵生成圖片</button>
+        <button class="action-btn" onclick="generateMultiple()" style="border-color:#a78bfa; color:#a78bfa;">🎲 生成 4 張變體</button>
 
         <!-- 風格資料庫區塊 -->
         <div class="style-db-section">
@@ -122,11 +153,19 @@
             <img id="generatedImage" src="" style="width:100%; border-radius:12px; border:1px solid #2a2a2a;">
             <button class="action-btn" onclick="downloadGeneratedImage()" style="margin-top:8px;">⬇️ 下載圖片</button>
         </div>
+        <div id="variantArea" style="display:none; margin-top:14px;">
+            <p style="font-size:11px; color:#a78bfa; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:8px;">4 張變體</p>
+            <div id="variantGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
+        </div>
     </aside>
 
 </div>
 
 <style>
+.template-group { display:flex; flex-direction:column; gap:6px; }
+.template-group-title { font-size:11px; font-weight:600; color:#6366f1; text-transform:uppercase; letter-spacing:0.08em; margin:0 0 4px; }
+.template-btn { background:#171717; border:1px solid #2a2a2a; color:#ccc; border-radius:8px; padding:8px 12px; font-size:13px; cursor:pointer; text-align:left; transition:all 0.2s; }
+.template-btn:hover { background:#1e1e2e; border-color:#6366f1; color:#c4b5fd; }
 .style-db-section {
     margin-top: 18px;
     border-top: 1px solid #2a2a2a;
@@ -736,6 +775,63 @@ function updateIntentStatus(blueprintType) {
     else if (blueprintType === "startup") status.innerText = "AI 已判斷：創業 / 產品需求";
     else status.innerText = "AI 已判斷：一般需求整理";
 }
+
+// ── 需求範本 ────────────────────────────────────────
+function showTemplates() {
+    document.getElementById("templateModal").style.display = "flex";
+}
+function hideTemplates() {
+    document.getElementById("templateModal").style.display = "none";
+}
+function useTemplate(text) {
+    document.getElementById("messageInput").value = text;
+    hideTemplates();
+    document.getElementById("messageInput").focus();
+}
+
+// ── 生成 4 張變體 ─────────────────────────────────────
+async function generateMultiple() {
+    const variantArea = document.getElementById("variantArea");
+    const variantGrid = document.getElementById("variantGrid");
+    variantGrid.innerHTML = "<p style='color:#555; font-size:13px;'>生成中，約需 60~90 秒...</p>";
+    variantArea.style.display = "block";
+
+    addMessage("🎲 正在生成 4 張變體，請稍候...", "ai-message loading");
+
+    try {
+        const response = await fetch("/generate_multiple", { method: "POST" });
+        const data = await response.json();
+        removeLoading();
+
+        if (data.error) { alert("生成失敗：" + data.error); return; }
+
+        variantGrid.innerHTML = "";
+        data.image_urls.forEach((url, i) => {
+            const wrapper = document.createElement("div");
+            wrapper.style.cssText = "position:relative;";
+
+            const img = document.createElement("img");
+            img.src = url;
+            img.style.cssText = "width:100%; border-radius:8px; border:1px solid #2a2a2a; cursor:pointer;";
+            img.title = "點擊下載";
+            img.onclick = () => {
+                const a = document.createElement("a");
+                a.href = url; a.download = `variant_${i+1}_${Date.now()}.webp`;
+                a.target = "_blank"; a.click();
+            };
+
+            wrapper.appendChild(img);
+            variantGrid.appendChild(wrapper);
+        });
+
+        addMessage(`✅ 4 張變體生成完成`, "ai-message");
+
+    } catch (err) {
+        removeLoading();
+        alert("生成失敗，請稍後再試");
+    }
+}
+
 </script>
 
 </body>

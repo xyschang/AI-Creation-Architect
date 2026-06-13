@@ -1,4 +1,4 @@
-from ai_roles import consultant_roles, clarify_roles, image_prompt_roles
+from engines.ai_roles import consultant_roles, clarify_roles, image_prompt_roles, startup_roles
 from engines.providers.provider_factory import get_ai_provider
 
 ask_model = get_ai_provider()
@@ -7,13 +7,12 @@ ask_model = get_ai_provider()
 def get_roles(mode_name):
     if mode_name == "consultant":
         return "AI 顧問模式", consultant_roles
-
     if mode_name == "clarify":
         return "需求澄清模式", clarify_roles
-
     if mode_name == "image":
         return "圖片提示詞模式", image_prompt_roles
-
+    if mode_name == "startup":
+        return "創業藍圖模式", startup_roles
     return "需求澄清模式", clarify_roles
 
 
@@ -41,10 +40,7 @@ def ask_ai(role_name, role_prompt, user_message, conversation_history, previous_
 2. 這是內部分析，不要寫太多廢話
 3. 重點是幫助最後整合 AI 判斷
 """
-
-    answer = ask_model(prompt)
-
-    return answer
+    return ask_model(prompt)
 
 
 def summarize_answers(mode_display_name, user_message, conversation_history, all_answers, character_profile=""):
@@ -65,7 +61,6 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 - 禁止替換主體：
 
 【主體藍圖】
-- 主體類型：
 - 主體名稱：
 - 主體外觀：
 - 重要特徵：
@@ -80,20 +75,14 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 
 【構圖藍圖】
 - 主體位置：
-- 主體朝向：
 - 鏡頭角度：
-- 拍攝高度：
 - 拍攝距離：
-- 畫面比例：
-- 主體佔畫面比例：
 - 景深效果：
 
 【場景藍圖】
 - 場景位置：
 - 背景元素：
 - 時間感：
-- 構圖：
-- 鏡頭角度：
 
 【固定規則】
 - 後續生成必須保持：
@@ -103,16 +92,16 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 【本次圖片提示詞】
 請生成一張......
 
-【你可以再補充】
+【建議補充】
 1. ...
 2. ...
-3. ...
 """
 
     elif mode_display_name == "AI 顧問模式":
         task_rule = """
 你的任務：
 請把自動化、系統開發或工作流程需求整理成 Workflow Blueprint。
+同時輸出一份可直接使用的自動化流程 JSON（n8n 格式）。
 
 請用以下格式回答：
 
@@ -129,10 +118,57 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 - 技術方向：
 - 第一版 MVP：
 
+【n8n 流程設定】
+```json
+{
+  "nodes": [
+    {
+      "name": "觸發條件",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {}
+    }
+  ],
+  "connections": {}
+}
+```
+
 【風險與限制】
 - 可能風險：
 - 缺少資訊：
 - 需要確認的問題：
+
+【建議下一步】
+1. ...
+2. ...
+3. ...
+"""
+
+    elif mode_display_name == "創業藍圖模式":
+        task_rule = """
+你的任務：
+請把創業或產品想法整理成完整的 Startup Blueprint。
+
+請用以下格式回答：
+
+【需求藍圖】
+- 目標客群：
+- 核心痛點：
+- 現有解決方案的缺點：
+
+【產品藍圖】
+- 核心功能：
+- MVP 範圍（第一版只做什麼）：
+- 使用者旅程：
+
+【商業藍圖】
+- 獲利模式：
+- 定價策略：
+- 成長路徑：
+
+【風險藍圖】
+- 最大風險：
+- 需要驗證的假設：
+- 資源缺口：
 
 【建議下一步】
 1. ...
@@ -143,47 +179,30 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
     else:
         task_rule = """
 你的任務：
-請把使用者的模糊想法整理成需求藍圖。
-
-如果使用者是在講創業、APP、產品或服務，請偏向 Startup Blueprint。
-如果只是一般模糊需求，請偏向一般需求整理。
+主動引導使用者把模糊想法說清楚。
 
 請用以下格式回答：
 
-【需求藍圖】
-- 目標：
-- 使用者/對象：
-- 核心問題：
-- 想達成的結果：
+【我理解你的需求是】
+一句話總結你理解到的需求
 
-【解決方案藍圖】
-- 可能方案：
-- 核心功能：
-- 第一版 MVP：
-- 差異化特色：
+【目前最需要釐清的是】
+提出最重要的一個問題，幫助使用者補充需求
 
-【風險與限制】
-- 可能風險：
-- 缺少資訊：
-- 需要確認的問題：
+【如果你的目標是...，我建議】
+根據可能的方向給出初步建議
 
-【建議下一步】
-1. ...
-2. ...
-3. ...
+【你可以這樣告訴我】
+給出 2-3 個具體的描述範例，讓使用者知道怎麼說更清楚
 """
 
     prompt = f"""
 你是 AI Creation Architect。
 
-目前模式：
-{mode_display_name}
+目前模式：{mode_display_name}
 
 目前藍圖：
 {character_profile}
-請注意：
-如果目前藍圖已有內容，請以目前藍圖為主，不要重新開始。
-使用者最新訊息通常是在補充或修改原本需求。
 
 歷史對話：
 {conversation_history}
@@ -199,18 +218,13 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 回答規則：
 1. 不要提到有多個 AI
 2. 不要顯示內部分析過程
-3. 回答不要太長
-4. 用繁體中文
-5. 語氣要像助理，不要像問卷
-6. 如果目前藍圖不是空的，請把它當成主要資料來源
-7. 使用者最新訊息只代表新增、修改或刪除某些內容
-8. 不要重新建立整份藍圖
-9. 請保留原本藍圖中沒有被使用者明確修改的部分
+3. 用繁體中文
+4. 語氣像助理，不像問卷
+5. 如果目前藍圖不是空的，以它為主要資料來源
+6. 保留原本藍圖中沒被明確修改的部分
 """
 
-    answer = ask_model(prompt)
-
-    return answer
+    return ask_model(prompt)
 
 
 def extract_blueprint(reply):
@@ -223,7 +237,6 @@ def extract_blueprint(reply):
     ]
 
     start = -1
-
     for marker in start_markers:
         start = reply.find(marker)
         if start != -1:
@@ -235,19 +248,18 @@ def extract_blueprint(reply):
     end_markers = [
         "【本次圖片提示詞】",
         "【建議下一步】",
-        "【你可以再補充】"
+        "【建議補充】",
+        "【你可以這樣告訴我】"
     ]
 
     end_positions = []
-
     for marker in end_markers:
         pos = reply.find(marker)
         if pos != -1 and pos > start:
             end_positions.append(pos)
 
     if end_positions:
-        end = min(end_positions)
-        return reply[start:end].strip()
+        return reply[start:min(end_positions)].strip()
 
     return reply[start:].strip()
 
@@ -256,31 +268,21 @@ def run_ai_round(mode_name, user_message, conversation_history, character_profil
     mode_display_name, selected_roles = get_roles(mode_name)
 
     all_answers = ""
-
     for role_name, role_prompt in selected_roles.items():
         answer = ask_ai(
-            role_name,
-            role_prompt,
-            user_message,
-            conversation_history,
-            all_answers,
-            character_profile
+            role_name, role_prompt,
+            user_message, conversation_history,
+            all_answers, character_profile
         )
-
         all_answers += f"\n\n【{role_name}】\n{answer}"
 
     final_answer = summarize_answers(
-        mode_display_name,
-        user_message,
-        conversation_history,
-        all_answers,
-        character_profile
+        mode_display_name, user_message,
+        conversation_history, all_answers, character_profile
     )
 
     updated_character_profile = character_profile
-
     new_blueprint = extract_blueprint(final_answer)
-
     if new_blueprint:
         updated_character_profile = new_blueprint
 

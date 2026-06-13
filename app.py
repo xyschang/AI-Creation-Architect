@@ -251,6 +251,38 @@ def generate_image_api():
     return jsonify({"image_url": image_url, "prompt_used": en_prompt})
 
 
+
+@app.route("/generate_multiple", methods=["POST"])
+def generate_multiple_api():
+    global image_blueprint, conversation_history
+    if not image_blueprint:
+        return jsonify({"error": "目前沒有生成藍圖，請先輸入需求或分析圖片。"})
+
+    from engines.providers.provider_factory import get_ai_provider
+    import concurrent.futures
+
+    ask_model = get_ai_provider()
+
+    prompt = f"""把以下藍圖轉成 FLUX 英文提示詞，只輸出提示詞，150字以內：
+
+{image_blueprint}"""
+
+    en_prompt = ask_model(prompt)
+
+    # 並行生成 4 張
+    def gen_one(_):
+        return generate_image(en_prompt)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        results = list(executor.map(gen_one, range(4)))
+
+    image_urls = [r for r in results if r and not r.startswith("ERROR:")]
+
+    if not image_urls:
+        return jsonify({"error": "所有圖片生成失敗，請稍後再試"})
+
+    return jsonify({"image_urls": image_urls, "prompt_used": en_prompt})
+
 @app.route("/projects", methods=["GET"])
 def get_projects():
     return jsonify({"projects": list_projects()})
