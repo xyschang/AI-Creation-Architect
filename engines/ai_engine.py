@@ -1,7 +1,7 @@
-from ollama import chat
 from ai_roles import consultant_roles, clarify_roles, image_prompt_roles
+from engines.providers.provider_factory import get_ai_provider
 
-MODEL_NAME = "qwen3"
+ask_model = get_ai_provider()
 
 
 def get_roles(mode_name):
@@ -42,14 +42,9 @@ def ask_ai(role_name, role_prompt, user_message, conversation_history, previous_
 3. 重點是幫助最後整合 AI 判斷
 """
 
-    response = chat(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+    answer = ask_model(prompt)
 
-    return response["message"]["content"]
+    return answer
 
 
 def summarize_answers(mode_display_name, user_message, conversation_history, all_answers, character_profile=""):
@@ -213,14 +208,9 @@ def summarize_answers(mode_display_name, user_message, conversation_history, all
 9. 請保留原本藍圖中沒有被使用者明確修改的部分
 """
 
-    response = chat(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+    answer = ask_model(prompt)
 
-    return response["message"]["content"]
+    return answer
 
 
 def extract_blueprint(reply):

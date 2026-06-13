@@ -2,8 +2,8 @@ from engines.providers.provider_factory import get_ai_provider
 
 ask_model = get_ai_provider()
 
-VISION_MODEL = "qwen2.5vl:7b"
+MODEL_NAME = "qwen3"
 
 
-def analyze_image(image_path):
+def ask_model(prompt):
     answer = ask_model(prompt)

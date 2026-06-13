@@ -1,4 +1,6 @@
-from ollama import chat
+from engines.providers.provider_factory import get_ai_provider
+
+ask_model = get_ai_provider()
 
 MODEL_NAME = "qwen3"
 
@@ -24,34 +26,4 @@ clarify
 - 如果只是想法模糊、需要整理需求，回答 clarify
 """
 
-    response = chat(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
-
-    result = response["message"]["content"].strip().lower()
-
-    if "image" in result:
-        return {
-            "mode": "image",
-            "blueprint": "image"
-        }
-
-    if "automation" in result:
-        return {
-            "mode": "consultant",
-            "blueprint": "workflow"
-        }
-
-    if "startup" in result:
-        return {
-            "mode": "clarify",
-            "blueprint": "startup"
-        }
-
-    return {
-        "mode": "clarify",
-        "blueprint": "general"
-    }
+    answer = ask_model(prompt)
