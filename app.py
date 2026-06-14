@@ -175,12 +175,23 @@ def chat_stream_api():
         if blueprint_type in ["image", "workflow", "startup"]:
             update_blueprint(blueprint_type, updated_blueprint)
 
+        yield f"data: {json_mod.dumps({'done': True, 'blueprint': updated_blueprint, 'blueprint_type': blueprint_type, 'full_reply': full_reply})}\n\n"
+
+    def _run_stream():
         global conversation_history
-        conversation_history += f"\nAI顧問：{full_reply}"
+        full = ""
+        for chunk in generate():
+            if b"full_reply" in chunk.encode() if isinstance(chunk, str) else b"full_reply" in chunk:
+                try:
+                    import json as _j
+                    d = _j.loads(chunk.replace("data: ", "").strip())
+                    if "full_reply" in d:
+                        full = d["full_reply"]
+                except: pass
+            yield chunk
+        conversation_history += f"\nAI顧問：{full}"
 
-        yield f"data: {json_mod.dumps({'done': True, 'blueprint': updated_blueprint, 'blueprint_type': blueprint_type})}\n\n"
-
-    return Response(stream_with_context(generate()), mimetype="text/event-stream")
+    return Response(stream_with_context(_run_stream()), mimetype="text/event-stream")
 
 @app.route("/upload_images", methods=["POST"])
 def upload_images():
