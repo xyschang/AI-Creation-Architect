@@ -29,6 +29,46 @@
             <button class="new-chat-btn" onclick="resetChat()">＋ 新專案</button>
             <button class="mobile-icon-btn" onclick="closeAllDrawers()" style="display:none;" id="sidebarCloseBtn" title="關閉">✕</button>
         </div>
+        <!-- 更新紀錄 Changelog -->
+        <div class="changelog-section">
+            <div class="changelog-header" onclick="toggleChangelog()">
+                <span>📋 更新紀錄</span>
+                <span id="changelogArrow">▶</span>
+            </div>
+            <div id="changelogBody" class="changelog-body" style="display:none;">
+                <div class="changelog-item">
+                    <span class="changelog-version">v6.0</span>
+                    <span class="changelog-date">2026.06.14</span>
+                    <p>手機版抽屜 UI、滑入動畫、Mobile Topbar</p>
+                </div>
+                <div class="changelog-item">
+                    <span class="changelog-version">v5.0</span>
+                    <span class="changelog-date">2026.06.14</span>
+                    <p>串流回覆、圖片合成、風格混合、歷史瀏覽、分享連結</p>
+                </div>
+                <div class="changelog-item">
+                    <span class="changelog-version">v4.0</span>
+                    <span class="changelog-date">2026.06.14</span>
+                    <p>PostgreSQL 風格資料庫、4張變體生成、需求範本</p>
+                </div>
+                <div class="changelog-item">
+                    <span class="changelog-version">v3.0</span>
+                    <span class="changelog-date">2026.06.14</span>
+                    <p>FLUX 一鍵生成圖片、Replicate API 串接</p>
+                </div>
+                <div class="changelog-item">
+                    <span class="changelog-version">v2.0</span>
+                    <span class="changelog-date">2026.06.14</span>
+                    <p>Claude Vision 圖片分析、風格引擎</p>
+                </div>
+                <div class="changelog-item">
+                    <span class="changelog-version">v1.0</span>
+                    <span class="changelog-date">2026.06.13</span>
+                    <p>Claude API 串接、AI 顧問對話、專案管理</p>
+                </div>
+            </div>
+        </div>
+
         <div class="sidebar-section-title">最近專案</div>
         <div id="projectList" class="project-list">尚未載入專案</div>
         <div class="sidebar-bottom">
