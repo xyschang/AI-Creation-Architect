@@ -574,5 +574,7 @@ textarea::placeholder { color: #444; }
     }
     .blueprint-panel.open { transform: translateX(0); }
     .mobile-topbar { display: none; }
-    .drawer-overlay { z-index: 45; }
+    .drawer-overlay { z-index: 45; }    
+
+    
 }
