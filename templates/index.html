@@ -9,48 +9,26 @@
 
 <div class="app">
 
+    <!-- Drawer Overlay -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeAllDrawers()"></div>
+
+    <!-- Mobile Top Bar -->
+    <div class="mobile-topbar">
+        <button class="mobile-icon-btn" onclick="toggleSidebar()" title="專案列表">☰</button>
+        <div class="mobile-topbar-title">
+            <div class="logo">AI</div>
+            <span>AI Architect</span>
+        </div>
+        <button class="mobile-icon-btn" onclick="toggleBlueprint()" title="生成藍圖">🗂</button>
+    </div>
+
     <!-- 左側：更新紀錄 + 最近專案 -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebarDrawer">
         <div class="sidebar-top">
             <div class="logo">AI</div>
             <button class="new-chat-btn" onclick="resetChat()">＋ 新專案</button>
+            <button class="mobile-icon-btn" onclick="closeAllDrawers()" style="display:none;" id="sidebarCloseBtn" title="關閉">✕</button>
         </div>
-
-        <!-- 更新紀錄 Changelog -->
-        <div class="changelog-section">
-            <div class="changelog-header" onclick="toggleChangelog()">
-                <span>📋 更新紀錄</span>
-                <span id="changelogArrow">▼</span>
-            </div>
-            <div id="changelogBody" class="changelog-body">
-                <div class="changelog-item">
-                    <span class="changelog-version">v5.0</span>
-                    <span class="changelog-date">2026.06.14</span>
-                    <p>串流回覆、圖片合成、風格混合、歷史瀏覽、分享連結</p>
-                </div>
-                <div class="changelog-item">
-                    <span class="changelog-version">v4.0</span>
-                    <span class="changelog-date">2026.06.14</span>
-                    <p>PostgreSQL 風格資料庫、4張變體生成、需求範本</p>
-                </div>
-                <div class="changelog-item">
-                    <span class="changelog-version">v3.0</span>
-                    <span class="changelog-date">2026.06.14</span>
-                    <p>FLUX 一鍵生成圖片、Replicate API 串接</p>
-                </div>
-                <div class="changelog-item">
-                    <span class="changelog-version">v2.0</span>
-                    <span class="changelog-date">2026.06.14</span>
-                    <p>Claude Vision 圖片分析、風格引擎</p>
-                </div>
-                <div class="changelog-item">
-                    <span class="changelog-version">v1.0</span>
-                    <span class="changelog-date">2026.06.13</span>
-                    <p>Claude API 串接、AI 顧問對話、專案管理</p>
-                </div>
-            </div>
-        </div>
-
         <div class="sidebar-section-title">最近專案</div>
         <div id="projectList" class="project-list">尚未載入專案</div>
         <div class="sidebar-bottom">
@@ -75,7 +53,7 @@
         </section>
 
         <!-- 需求範本浮層 -->
-        <div id="templateModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center;">
+        <div id="templateModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; display:flex; align-items:center; justify-content:center;">
             <div style="background:#1e1e1e; border:1px solid #333; border-radius:16px; padding:24px; width:min(560px,92%); max-height:80vh; overflow-y:auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
                     <h3 style="font-size:16px; color:#f0f0f0; margin:0;">📋 選擇需求範本</h3>
@@ -103,26 +81,6 @@
             </div>
         </div>
 
-        <!-- 圖片合成工具 -->
-        <div id="compositeArea" style="display:none;" class="image-upload-area">
-            <div class="upload-box" style="flex-direction:column; gap:10px;">
-                <p style="color:#a78bfa; font-size:13px; font-weight:600; margin:0;">🖼 圖片合成：主體 + 背景</p>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <label style="color:#888; font-size:12px; white-space:nowrap;">主體圖</label>
-                    <select id="subjectSelect" style="flex:1; background:#1a1a1a; border:1px solid #333; color:#ccc; padding:6px; border-radius:6px; font-size:12px;">
-                        <option value="">選擇主體圖...</option>
-                    </select>
-                </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <label style="color:#888; font-size:12px; white-space:nowrap;">背景圖</label>
-                    <select id="bgSelect" style="flex:1; background:#1a1a1a; border:1px solid #333; color:#ccc; padding:6px; border-radius:6px; font-size:12px;">
-                        <option value="">選擇背景圖...</option>
-                    </select>
-                </div>
-                <button class="composite-btn" onclick="compositeImages()">🎨 開始合成</button>
-            </div>
-        </div>
-
         <div class="control-bar">
             <select id="mode">
                 <option value="auto" selected>自動判斷模式</option>
@@ -131,7 +89,6 @@
                 <option value="image">圖片提示詞模式</option>
             </select>
             <button onclick="resetChat()">重置對話</button>
-            <button onclick="toggleComposite()" style="border-color:#a78bfa; color:#a78bfa;">🖼 圖片合成</button>
         </div>
 
         <p id="intentStatus" class="intent-status">目前：自動判斷模式</p>
@@ -160,9 +117,12 @@
         </div>
     </main>
 
-    <!-- 右側：Blueprint + 工具 -->
+    <!-- 右側：Blueprint + 風格資料庫 -->
     <aside class="blueprint-panel side-panel">
-        <h2 id="blueprintTitle">目前生成藍圖</h2>
+        <div class="drawer-close-btn">
+            <h2 id="blueprintTitle">目前生成藍圖</h2>
+            <button onclick="closeAllDrawers()">✕ 關閉</button>
+        </div>
         <p id="blueprintNote" class="side-note">AI 會依照你的需求自動整理對應藍圖。</p>
 
         <div id="characterProfile" class="profile-box">
@@ -184,52 +144,32 @@
             </div>
         </div>
 
+        <!-- 操作按鈕 -->
         <button class="action-btn" onclick="copyCharacterProfile()">📋 複製生成藍圖</button>
         <button class="action-btn" onclick="generatePrompt()">✨ 產生完整提示詞</button>
         <button class="action-btn" onclick="analyzeAndGeneratePrompt()">🚀 分析並產生提示詞</button>
         <button class="action-btn generate-image-btn" onclick="generateImage()">🎨 一鍵生成圖片</button>
         <button class="action-btn" onclick="generateMultiple()" style="border-color:#a78bfa; color:#a78bfa;">🎲 生成 4 張變體</button>
-        <button class="action-btn" onclick="exportN8n()" style="border-color:#10b981; color:#10b981;">⬇️ 匯出 n8n JSON</button>
 
-        <!-- 提示詞優化迭代 -->
-        <div class="style-db-section">
-            <p class="style-db-title">🔧 優化上一張圖</p>
-            <p class="style-db-note">說明想改哪裡，AI 會調整提示詞重新生成</p>
-            <div style="display:flex; gap:6px; margin-top:6px;">
-                <input id="refineInput" placeholder="例如：光線更強、背景換成城市" style="flex:1; padding:7px 10px; background:#1a1a1a; border:1px solid #2e2e2e; border-radius:7px; color:#e8e8e8; font-size:12px; outline:none;">
-                <button onclick="refineImage()" style="padding:7px 12px; background:#6366f1; color:white; border:none; border-radius:7px; font-size:12px; cursor:pointer; white-space:nowrap;">調整</button>
-            </div>
-        </div>
-
-        <!-- 風格資料庫 -->
+        <!-- 風格資料庫區塊 -->
         <div class="style-db-section">
             <p class="style-db-title">🗂 風格資料庫</p>
             <p class="style-db-note">上傳圖片後點「存入風格庫」，AI 會學習這批圖的風格</p>
+
             <button class="action-btn style-save-btn" onclick="saveStyleToDb()">📥 存入風格庫</button>
             <button class="action-btn" onclick="loadStyleDb()">🔍 查看風格庫</button>
             <button class="action-btn generate-style-btn" onclick="generateWithStyle()">🎨 照風格生成圖片</button>
-            <button class="action-btn" onclick="blendStyles()" style="border-color:#f59e0b; color:#f59e0b;">🎭 混合風格生成</button>
+
+            <!-- 風格庫清單 -->
             <div id="styleDbList" class="style-db-list"></div>
         </div>
 
-        <!-- 歷史生成圖片 -->
-        <div class="style-db-section">
-            <p class="style-db-title">🕓 歷史生成圖片</p>
-            <button class="action-btn" onclick="loadHistory()">📂 載入歷史圖片</button>
-            <div id="historyGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;"></div>
-        </div>
-
-        <!-- 生成結果 -->
+        <!-- 生成圖片結果 -->
         <div id="generatedImageArea" style="display:none; margin-top:14px;">
             <p style="font-size:11px; color:#6366f1; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:8px;">生成結果</p>
             <img id="generatedImage" src="" style="width:100%; border-radius:12px; border:1px solid #2a2a2a;">
-            <div style="display:flex; gap:6px; margin-top:8px;">
-                <button class="action-btn" onclick="downloadGeneratedImage()" style="flex:1;">⬇️ 下載</button>
-                <button class="action-btn" onclick="shareGeneratedImage()" style="flex:1; border-color:#6366f1; color:#6366f1;">🔗 分享</button>
-            </div>
+            <button class="action-btn" onclick="downloadGeneratedImage()" style="margin-top:8px;">⬇️ 下載圖片</button>
         </div>
-
-        <!-- 4張變體 -->
         <div id="variantArea" style="display:none; margin-top:14px;">
             <p style="font-size:11px; color:#a78bfa; text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:8px;">4 張變體</p>
             <div id="variantGrid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"></div>
@@ -239,66 +179,83 @@
 </div>
 
 <style>
-/* Changelog */
-.changelog-section { border-bottom: 1px solid #222; margin-bottom: 4px; }
-.changelog-header { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; cursor:pointer; font-size:12px; color:#888; transition:color 0.2s; }
-.changelog-header:hover { color:#ccc; }
-.changelog-body { padding:0 14px 10px; display:flex; flex-direction:column; gap:8px; }
-.changelog-item { background:#171717; border:1px solid #222; border-radius:8px; padding:8px 10px; }
-.changelog-version { font-size:11px; font-weight:700; color:#6366f1; }
-.changelog-date { font-size:10px; color:#555; margin-left:6px; }
-.changelog-item p { font-size:11px; color:#888; margin:4px 0 0; line-height:1.5; }
-
-/* Templates */
 .template-group { display:flex; flex-direction:column; gap:6px; }
 .template-group-title { font-size:11px; font-weight:600; color:#6366f1; text-transform:uppercase; letter-spacing:0.08em; margin:0 0 4px; }
 .template-btn { background:#171717; border:1px solid #2a2a2a; color:#ccc; border-radius:8px; padding:8px 12px; font-size:13px; cursor:pointer; text-align:left; transition:all 0.2s; }
 .template-btn:hover { background:#1e1e2e; border-color:#6366f1; color:#c4b5fd; }
-
-/* Style DB */
-.style-db-section { margin-top:14px; border-top:1px solid #2a2a2a; padding-top:12px; }
-.style-db-title { font-size:13px; font-weight:600; color:#f0f0f0; margin-bottom:4px; }
-.style-db-note { font-size:11px; color:#555; margin-bottom:8px; line-height:1.5; }
-.style-save-btn { border-color:#10b981 !important; color:#10b981 !important; }
-.generate-style-btn { border-color:#f59e0b !important; color:#f59e0b !important; }
-.style-db-list { margin-top:8px; display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; }
-.style-item { background:#171717; border:1px solid #2a2a2a; border-radius:8px; padding:8px; display:flex; align-items:center; gap:8px; }
-.style-item img { width:40px; height:40px; object-fit:cover; border-radius:6px; flex-shrink:0; }
-.style-item-info { flex:1; overflow:hidden; }
-.style-item-info p { font-size:11px; color:#aaa; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
-.style-item-delete { background:transparent; border:none; color:#555; font-size:13px; cursor:pointer; padding:4px; flex-shrink:0; }
-.style-item-delete:hover { color:#f87171; }
-.composite-btn { width:100%; padding:8px; background:#6366f1; color:white; border:none; border-radius:7px; font-size:13px; cursor:pointer; }
-
-/* History */
-.history-img-wrap { position:relative; cursor:pointer; }
-.history-img-wrap img { width:100%; border-radius:8px; border:1px solid #2a2a2a; }
-.history-img-wrap:hover img { border-color:#6366f1; }
-.history-actions { display:flex; gap:4px; margin-top:4px; }
-.history-actions button { flex:1; padding:4px; font-size:10px; border-radius:5px; cursor:pointer; }
+.style-db-section {
+    margin-top: 18px;
+    border-top: 1px solid #2a2a2a;
+    padding-top: 14px;
+}
+.style-db-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f0f0f0;
+    margin-bottom: 4px;
+}
+.style-db-note {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+.style-save-btn { border-color: #10b981 !important; color: #10b981 !important; }
+.generate-style-btn { border-color: #f59e0b !important; color: #f59e0b !important; }
+.style-db-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.style-item {
+    background: #171717;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.style-item img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.style-item-info {
+    flex: 1;
+    overflow: hidden;
+}
+.style-item-info p {
+    font-size: 11px;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+.style-item-delete {
+    background: transparent;
+    border: none;
+    color: #555;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+}
+.style-item-delete:hover { color: #f87171; }
 </style>
 
 <script>
 let currentProject = "";
 let lastReply = "";
-let lastPromptUsed = "";
-let lastGeneratedImageId = null;
 
 function quickFill(text) {
     document.getElementById("messageInput").value = text;
-}
-
-function toggleChangelog() {
-    const body = document.getElementById("changelogBody");
-    const arrow = document.getElementById("changelogArrow");
-    const isHidden = body.style.display === "none";
-    body.style.display = isHidden ? "flex" : "none";
-    arrow.innerText = isHidden ? "▼" : "▶";
-}
-
-function toggleComposite() {
-    const area = document.getElementById("compositeArea");
-    area.style.display = area.style.display === "none" ? "block" : "none";
 }
 
 document.getElementById("mode").addEventListener("change", async function () {
@@ -314,6 +271,7 @@ async function sendMessage() {
     addMessage(message, "user-message");
     input.value = "";
 
+    // 建立串流訊息泡泡
     const chatBox = document.getElementById("chatBox");
     const wrapper = document.createElement("div");
     wrapper.className = "message-wrapper";
@@ -337,32 +295,46 @@ async function sendMessage() {
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+
         const chunk = decoder.decode(value);
         const lines = chunk.split("\n");
+
         for (const line of lines) {
             if (!line.startsWith("data: ")) continue;
             try {
                 const json = JSON.parse(line.slice(6));
+
                 if (json.text) {
                     fullText += json.text;
                     bubble.innerText = fullText;
                     chatBox.scrollTop = chatBox.scrollHeight;
                 }
+
                 if (json.done) {
                     lastReply = fullText;
                     const blueprintType = json.blueprint_type || "general";
                     updateBlueprintTitle(blueprintType);
                     updateIntentStatus(blueprintType);
+
                     document.querySelector(".side-panel").style.display =
                         blueprintType === "image" ? "block" : "none";
-                    if (json.blueprint && json.blueprint.trim()) renderBlueprint(json.blueprint);
+
+                    if (json.blueprint && json.blueprint.trim()) {
+                        renderBlueprint(json.blueprint);
+                    }
+
+                    // 加複製按鈕
                     const copyBtn = document.createElement("button");
                     copyBtn.innerText = "複製回答";
                     copyBtn.className = "message-copy-btn";
                     copyBtn.onclick = () => { navigator.clipboard.writeText(fullText); alert("回答已複製"); };
                     wrapper.appendChild(copyBtn);
                 }
-                if (json.error) bubble.innerText = "❌ 錯誤：" + json.error;
+
+                if (json.error) {
+                    bubble.innerText = "❌ 錯誤：" + json.error;
+                }
+
             } catch(e) {}
         }
     }
@@ -372,10 +344,12 @@ function addMessage(text, className) {
     const chatBox = document.getElementById("chatBox");
     const wrapper = document.createElement("div");
     wrapper.className = "message-wrapper";
+
     const div = document.createElement("div");
     div.className = className;
     div.innerText = text;
     wrapper.appendChild(div);
+
     if (className === "ai-message") {
         const copyBtn = document.createElement("button");
         copyBtn.innerText = "複製回答";
@@ -383,6 +357,7 @@ function addMessage(text, className) {
         copyBtn.onclick = () => { navigator.clipboard.writeText(text); alert("回答已複製"); };
         wrapper.appendChild(copyBtn);
     }
+
     chatBox.appendChild(wrapper);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
@@ -394,20 +369,22 @@ function removeLoading() {
 
 async function resetChat() {
     await fetch("/reset", { method: "POST" });
-    document.getElementById("chatBox").innerHTML = `<div class="message-wrapper"><div class="ai-message">對話已重置。請重新輸入你的需求。</div></div>`;
+    document.getElementById("chatBox").innerHTML = `
+        <div class="message-wrapper">
+            <div class="ai-message">對話已重置。請重新輸入你的需求。</div>
+        </div>`;
     renderBlueprint("");
     document.getElementById("previewBox").innerHTML = "";
     document.getElementById("imageInput").value = "";
     document.getElementById("generatedImageArea").style.display = "none";
-    document.getElementById("variantArea").style.display = "none";
-    document.getElementById("historyGrid").innerHTML = "";
-    lastPromptUsed = "";
 }
 
 function copyText(text) { navigator.clipboard.writeText(text); alert("已複製"); }
+
 function copyCharacterProfile() {
     copyText(`【主體藍圖】\n${document.getElementById("subjectBlueprint").innerText}\n\n【風格藍圖】\n${document.getElementById("styleBlueprint").innerText}\n\n【場景藍圖】\n${document.getElementById("sceneBlueprint").innerText}\n\n【固定規則】\n${document.getElementById("fixedRules").innerText}`);
 }
+
 function copyLastReply() {
     if (!lastReply) { alert("目前還沒有 AI 回答可以複製"); return; }
     copyText(lastReply);
@@ -420,7 +397,9 @@ function renderConversationHistory(historyText) {
         const text = part.trim();
         if (!text) return;
         if (text.startsWith("使用者：")) addMessage(text.replace("使用者：", "").trim(), "user-message");
-        else addMessage(text.split("：").slice(1).join("：").trim(), "ai-message");
+        else if (text.startsWith("AI顧問：")) addMessage(text.replace("AI顧問：", "").trim(), "ai-message");
+        else if (text.startsWith("Vision分析：")) addMessage(text.replace("Vision分析：", "").trim(), "ai-message");
+        else if (text.startsWith("AI生成完整提示詞：")) addMessage(text.replace("AI生成完整提示詞：", "").trim(), "ai-message");
     });
     document.getElementById("chatBox").scrollTop = 99999;
 }
@@ -429,18 +408,22 @@ async function loadProjects() {
     const response = await fetch("/projects");
     const data = await response.json();
     const projectList = document.getElementById("projectList");
+
     if (!data.projects || data.projects.length === 0) {
         projectList.innerHTML = `<div class="empty-projects">尚無專案</div>`;
         return;
     }
+
     projectList.innerHTML = "";
     data.projects.forEach(project => {
         const wrapper = document.createElement("div");
         wrapper.className = "project-item";
+
         const nameSpan = document.createElement("span");
         nameSpan.className = "project-name";
         nameSpan.innerText = project;
         nameSpan.onclick = async function () { await loadProject(project); };
+
         const deleteBtn = document.createElement("button");
         deleteBtn.innerHTML = "🗑";
         deleteBtn.className = "delete-project-btn";
@@ -449,6 +432,7 @@ async function loadProjects() {
             if (!confirm(`確定要刪除「${project}」嗎？`)) return;
             await deleteProject(project);
         };
+
         wrapper.appendChild(nameSpan);
         wrapper.appendChild(deleteBtn);
         projectList.appendChild(wrapper);
@@ -469,12 +453,11 @@ async function loadProject(projectName) {
     currentProject = projectName;
     document.getElementById("projectNameInput").value = projectName;
 
+    // 切換專案時先清空右側所有內容
     renderBlueprint("");
     document.getElementById("generatedImageArea").style.display = "none";
     document.getElementById("generatedImage").src = "";
     document.getElementById("styleDbList").innerHTML = "";
-    document.getElementById("historyGrid").innerHTML = "";
-    lastPromptUsed = "";
 
     const previewBox = document.getElementById("previewBox");
     previewBox.innerHTML = "";
@@ -490,12 +473,17 @@ async function loadProject(projectName) {
             wrapper.appendChild(img); wrapper.appendChild(btn);
             previewBox.appendChild(wrapper);
         });
-        updateCompositeSelects(data.uploaded_images);
     }
 
-    document.getElementById("chatBox").innerHTML = `<div class="message-wrapper"><div class="ai-message">已載入專案：${projectName}</div></div>`;
+    document.getElementById("chatBox").innerHTML = `
+        <div class="message-wrapper">
+            <div class="ai-message">已載入專案：${projectName}</div>
+        </div>`;
     renderConversationHistory(data.conversation_history);
-    if (data.image_blueprint && data.image_blueprint.trim()) renderBlueprint(data.image_blueprint);
+
+    if (data.image_blueprint && data.image_blueprint.trim()) {
+        renderBlueprint(data.image_blueprint);
+    }
 
     await loadStyleDb();
 }
@@ -503,6 +491,7 @@ async function loadProject(projectName) {
 async function saveProject() {
     const projectName = document.getElementById("projectNameInput").value.trim();
     if (!projectName) { alert("請輸入專案名稱"); return; }
+
     const response = await fetch("/save_project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -510,6 +499,7 @@ async function saveProject() {
     });
     const data = await response.json();
     if (data.error) { alert(data.error); return; }
+
     currentProject = projectName;
     alert("專案已儲存：" + data.project_name);
     await loadProjects();
@@ -530,11 +520,14 @@ async function deleteProject(projectName) {
 async function uploadImages() {
     const input = document.getElementById("imageInput");
     if (input.files.length === 0) { alert("請先選擇圖片"); return; }
+
     const formData = new FormData();
     for (let file of input.files) { formData.append("images", file); }
+
     const response = await fetch("/upload_images", { method: "POST", body: formData });
     const data = await response.json();
     if (data.error) { alert(data.error); return; }
+
     const previewBox = document.getElementById("previewBox");
     previewBox.innerHTML = "";
     data.images.forEach(url => {
@@ -548,20 +541,7 @@ async function uploadImages() {
         wrapper.appendChild(img); wrapper.appendChild(btn);
         previewBox.appendChild(wrapper);
     });
-    updateCompositeSelects(data.images);
     alert("圖片上傳成功");
-}
-
-function updateCompositeSelects(images) {
-    const subjectSelect = document.getElementById("subjectSelect");
-    const bgSelect = document.getElementById("bgSelect");
-    subjectSelect.innerHTML = '<option value="">選擇主體圖...</option>';
-    bgSelect.innerHTML = '<option value="">選擇背景圖...</option>';
-    images.forEach(url => {
-        const name = url.split("/").pop();
-        subjectSelect.innerHTML += `<option value="${url}">${name}</option>`;
-        bgSelect.innerHTML += `<option value="${url}">${name}</option>`;
-    });
 }
 
 async function analyzeImage(imageUrl) {
@@ -575,7 +555,191 @@ async function analyzeImage(imageUrl) {
     removeLoading();
     if (data.error) { alert(data.error); return; }
     addMessage(data.analysis, "ai-message");
-    if (data.blueprint && data.blueprint.trim()) renderBlueprint(data.blueprint);
+    if (data.blueprint && data.blueprint.trim() !== "") renderBlueprint(data.blueprint);
+}
+
+// ── 風格資料庫 ──────────────────────────────
+
+async function saveStyleToDb() {
+    const projectName = document.getElementById("projectNameInput").value.trim();
+    if (!projectName) { alert("請先輸入專案名稱"); return; }
+
+    const images = document.querySelectorAll(".preview-img");
+    if (images.length === 0) { alert("請先上傳圖片"); return; }
+
+    const btn = document.querySelector(".style-save-btn");
+    btn.disabled = true;
+    btn.innerText = "⏳ 分析中...";
+
+    let count = 0;
+    for (const img of images) {
+        const imageUrl = img.getAttribute("src");
+        addMessage(`🔍 分析風格中 (${count + 1}/${images.length})...`, "ai-message loading");
+
+        const response = await fetch("/analyze_style", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image_url: imageUrl, project_name: projectName })
+        });
+        const data = await response.json();
+        removeLoading();
+
+        if (data.error) {
+            addMessage(`❌ 分析失敗：${data.error}`, "ai-message");
+        } else {
+            count++;
+            addMessage(`✅ 風格已存入資料庫：${data.style.visual_style || ""} / ${data.style.color_tone || ""}`, "ai-message");
+        }
+    }
+
+    currentProject = projectName;
+    btn.disabled = false;
+    btn.innerText = "📥 存入風格庫";
+    await loadStyleDb();
+}
+
+async function loadStyleDb() {
+    const projectName = document.getElementById("projectNameInput").value.trim() || currentProject;
+    if (!projectName) return;
+
+    const response = await fetch("/get_styles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project_name: projectName })
+    });
+    const data = await response.json();
+    const list = document.getElementById("styleDbList");
+
+    if (!data.styles || data.styles.length === 0) {
+        list.innerHTML = `<p style="font-size:12px; color:#444; padding:8px 0;">尚無風格資料</p>`;
+        return;
+    }
+
+    list.innerHTML = "";
+    data.styles.forEach(style => {
+        const item = document.createElement("div");
+        item.className = "style-item";
+
+        const img = document.createElement("img");
+        img.src = style.image_url;
+        img.onerror = () => { img.style.display = "none"; };
+
+        const info = document.createElement("div");
+        info.className = "style-item-info";
+        info.innerHTML = `
+            <p>🎨 ${style.visual_style || "未知風格"}</p>
+            <p>🌈 ${style.color_tone || ""}</p>
+            <p>✨ ${style.atmosphere || ""}</p>
+        `;
+
+        const delBtn = document.createElement("button");
+        delBtn.innerHTML = "🗑";
+        delBtn.className = "style-item-delete";
+        delBtn.onclick = async () => {
+            await fetch("/delete_style", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: style.id })
+            });
+            await loadStyleDb();
+        };
+
+        item.appendChild(img);
+        item.appendChild(info);
+        item.appendChild(delBtn);
+        list.appendChild(item);
+    });
+}
+
+async function generateWithStyle() {
+    const projectName = document.getElementById("projectNameInput").value.trim() || currentProject;
+    if (!projectName) { alert("請先設定專案名稱並存入風格資料"); return; }
+
+    const btn = document.querySelector(".generate-style-btn");
+    btn.disabled = true;
+    btn.innerText = "⏳ 生成中...";
+    addMessage("🎨 AI 正在根據風格資料庫生成圖片...", "ai-message loading");
+
+    try {
+        const response = await fetch("/generate_with_style", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ project_name: projectName })
+        });
+        const data = await response.json();
+        removeLoading();
+
+        if (data.error) { alert("生成失敗：" + data.error); return; }
+
+        addMessage(`✅ 使用 ${data.style_count} 筆風格資料生成\n提示詞：${data.prompt_used}`, "ai-message");
+
+        document.getElementById("generatedImage").src = data.image_url;
+        document.getElementById("generatedImageArea").style.display = "block";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "message-wrapper";
+        const imgEl = document.createElement("img");
+        imgEl.src = data.image_url;
+        imgEl.style.cssText = "max-width:100%; border-radius:12px; margin-top:4px; border:1px solid #2a2a2a;";
+        wrapper.appendChild(imgEl);
+        document.getElementById("chatBox").appendChild(wrapper);
+        document.getElementById("chatBox").scrollTop = 99999;
+
+    } catch (err) {
+        removeLoading();
+        alert("生成失敗，請稍後再試");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "🎨 照風格生成圖片";
+    }
+}
+
+// ── 一鍵生成 ────────────────────────────────
+
+async function generateImage() {
+    const btn = document.querySelector(".generate-image-btn");
+    btn.disabled = true;
+    btn.innerText = "⏳ 生成中...";
+    addMessage("🎨 FLUX 正在生成圖片，約需 15~30 秒...", "ai-message loading");
+
+    try {
+        const response = await fetch("/generate_image", { method: "POST" });
+        const data = await response.json();
+        removeLoading();
+
+        if (data.error) { alert("生成失敗：" + data.error); return; }
+
+        addMessage("✅ 使用提示詞：\n" + data.prompt_used, "ai-message");
+
+        document.getElementById("generatedImage").src = data.image_url;
+        document.getElementById("generatedImageArea").style.display = "block";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "message-wrapper";
+        const imgEl = document.createElement("img");
+        imgEl.src = data.image_url;
+        imgEl.style.cssText = "max-width:100%; border-radius:12px; margin-top:4px; border:1px solid #2a2a2a;";
+        wrapper.appendChild(imgEl);
+        document.getElementById("chatBox").appendChild(wrapper);
+        document.getElementById("chatBox").scrollTop = 99999;
+
+    } catch (err) {
+        removeLoading();
+        alert("生成失敗，請稍後再試");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "🎨 一鍵生成圖片";
+    }
+}
+
+function downloadGeneratedImage() {
+    const img = document.getElementById("generatedImage");
+    if (!img.src) return;
+    const a = document.createElement("a");
+    a.href = img.src;
+    a.download = "generated_" + Date.now() + ".webp";
+    a.target = "_blank";
+    a.click();
 }
 
 async function generatePrompt() {
@@ -587,264 +751,36 @@ async function generatePrompt() {
     addMessage(data.prompt, "ai-message");
 }
 
-function showGeneratedImage(imageUrl, promptUsed) {
-    lastPromptUsed = promptUsed;
-    document.getElementById("generatedImage").src = imageUrl;
-    document.getElementById("generatedImageArea").style.display = "block";
+async function analyzeAndGeneratePrompt() {
+    const firstImage = document.querySelector(".preview-img");
+    if (!firstImage) { alert("請先上傳圖片"); return; }
+    const imageUrl = firstImage.getAttribute("src");
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "message-wrapper";
-    const imgEl = document.createElement("img");
-    imgEl.src = imageUrl;
-    imgEl.style.cssText = "max-width:100%; border-radius:12px; margin-top:4px; border:1px solid #2a2a2a;";
-    wrapper.appendChild(imgEl);
-    document.getElementById("chatBox").appendChild(wrapper);
-    document.getElementById("chatBox").scrollTop = 99999;
-}
-
-async function generateImage() {
-    const btn = document.querySelector(".generate-image-btn");
-    btn.disabled = true; btn.innerText = "⏳ 生成中...";
-    addMessage("🎨 FLUX 正在生成圖片，約需 15~30 秒...", "ai-message loading");
     try {
-        const response = await fetch("/generate_image", { method: "POST" });
-        const data = await response.json();
-        removeLoading();
-        if (data.error) { alert("生成失敗：" + data.error); return; }
-        addMessage("✅ 使用提示詞：\n" + data.prompt_used, "ai-message");
-        showGeneratedImage(data.image_url, data.prompt_used);
-    } catch (err) { removeLoading(); alert("生成失敗，請稍後再試"); }
-    finally { btn.disabled = false; btn.innerText = "🎨 一鍵生成圖片"; }
-}
-
-async function refineImage() {
-    const instruction = document.getElementById("refineInput").value.trim();
-    if (!instruction) { alert("請輸入修改指示"); return; }
-    if (!lastPromptUsed) { alert("請先生成一張圖片"); return; }
-
-    addMessage(`🔧 優化中：${instruction}`, "ai-message loading");
-    const response = await fetch("/refine_image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instruction, last_prompt: lastPromptUsed })
-    });
-    const data = await response.json();
-    removeLoading();
-    if (data.error) { alert(data.error); return; }
-    addMessage("✅ 優化後提示詞：\n" + data.prompt_used, "ai-message");
-    showGeneratedImage(data.image_url, data.prompt_used);
-    document.getElementById("refineInput").value = "";
-}
-
-async function exportN8n() {
-    addMessage("⬇️ 正在生成 n8n JSON...", "ai-message loading");
-    const response = await fetch("/export_n8n", { method: "POST" });
-    const data = await response.json();
-    removeLoading();
-    if (data.error) { alert(data.error); return; }
-    const blob = new Blob([data.n8n_json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `workflow_${Date.now()}.json`; a.click();
-    addMessage("✅ n8n JSON 已下載，可直接匯入 n8n！", "ai-message");
-}
-
-function downloadGeneratedImage() {
-    const img = document.getElementById("generatedImage");
-    if (!img.src) return;
-    const a = document.createElement("a");
-    a.href = img.src; a.download = "generated_" + Date.now() + ".webp"; a.target = "_blank"; a.click();
-}
-
-function shareGeneratedImage() {
-    const img = document.getElementById("generatedImage");
-    if (!img.src) return;
-    navigator.clipboard.writeText(img.src);
-    alert("圖片連結已複製到剪貼簿！");
-}
-
-async function loadHistory() {
-    const projectName = document.getElementById("projectNameInput").value.trim() || currentProject;
-    if (!projectName) { alert("請先設定專案名稱"); return; }
-    const response = await fetch("/history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project_name: projectName })
-    });
-    const data = await response.json();
-    const grid = document.getElementById("historyGrid");
-    if (!data.images || data.images.length === 0) {
-        grid.innerHTML = `<p style="font-size:12px; color:#444; padding:8px 0; grid-column:1/-1;">尚無歷史圖片</p>`;
-        return;
-    }
-    grid.innerHTML = "";
-    data.images.forEach(img => {
-        const wrap = document.createElement("div");
-        wrap.className = "history-img-wrap";
-        const imgEl = document.createElement("img");
-        imgEl.src = img.image_url;
-        imgEl.onerror = () => { wrap.remove(); };
-        const actions = document.createElement("div");
-        actions.className = "history-actions";
-        const dlBtn = document.createElement("button");
-        dlBtn.innerText = "⬇️";
-        dlBtn.style.cssText = "background:#1a1a1a; border:1px solid #333; color:#aaa; border-radius:5px;";
-        dlBtn.onclick = () => { const a = document.createElement("a"); a.href = img.image_url; a.download = `history_${img.id}.webp`; a.target = "_blank"; a.click(); };
-        const shareBtn = document.createElement("button");
-        shareBtn.innerText = "🔗";
-        shareBtn.style.cssText = "background:#1a1a1a; border:1px solid #333; color:#aaa; border-radius:5px;";
-        shareBtn.onclick = () => { navigator.clipboard.writeText(img.image_url); alert("連結已複製"); };
-        actions.appendChild(dlBtn); actions.appendChild(shareBtn);
-        wrap.appendChild(imgEl); wrap.appendChild(actions);
-        grid.appendChild(wrap);
-    });
-}
-
-async function compositeImages() {
-    const subjectUrl = document.getElementById("subjectSelect").value;
-    const bgUrl = document.getElementById("bgSelect").value;
-    if (!subjectUrl || !bgUrl) { alert("請選擇主體圖和背景圖"); return; }
-    if (subjectUrl === bgUrl) { alert("主體圖和背景圖不能相同"); return; }
-
-    addMessage("🖼 AI 正在分析並合成圖片...", "ai-message loading");
-    const response = await fetch("/composite_images", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject_url: subjectUrl, background_url: bgUrl })
-    });
-    const data = await response.json();
-    removeLoading();
-    if (data.error) { alert(data.error); return; }
-    addMessage("✅ 合成完成！提示詞：\n" + data.prompt_used, "ai-message");
-    showGeneratedImage(data.image_url, data.prompt_used);
-}
-
-async function saveStyleToDb() {
-    const projectName = document.getElementById("projectNameInput").value.trim();
-    if (!projectName) { alert("請先輸入專案名稱"); return; }
-    const images = document.querySelectorAll(".preview-img");
-    if (images.length === 0) { alert("請先上傳圖片"); return; }
-    const btn = document.querySelector(".style-save-btn");
-    btn.disabled = true; btn.innerText = "⏳ 分析中...";
-    let count = 0;
-    for (const img of images) {
-        const imageUrl = img.getAttribute("src");
-        addMessage(`🔍 分析風格中 (${count + 1}/${images.length})...`, "ai-message loading");
-        const response = await fetch("/analyze_style", {
+        addMessage("正在分析圖片並建立 Blueprint...", "ai-message loading");
+        const analyzeResponse = await fetch("/analyze_image", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image_url: imageUrl, project_name: projectName })
+            body: JSON.stringify({ image_url: imageUrl })
         });
-        const data = await response.json();
+        const analyzeData = await analyzeResponse.json();
         removeLoading();
-        if (data.error) { addMessage(`❌ 分析失敗：${data.error}`, "ai-message"); }
-        else { count++; addMessage(`✅ 風格已存入：${data.style.visual_style || ""} / ${data.style.color_tone || ""}`, "ai-message"); }
+        if (analyzeData.error) { alert(analyzeData.error); return; }
+
+        document.querySelector(".side-panel").style.display = "block";
+        renderBlueprint(analyzeData.blueprint);
+        addMessage(analyzeData.analysis, "ai-message");
+
+        addMessage("Blueprint 建立完成，正在產生完整提示詞...", "ai-message loading");
+        const promptResponse = await fetch("/generate_prompt", { method: "POST" });
+        const promptData = await promptResponse.json();
+        removeLoading();
+        if (promptData.error) { alert(promptData.error); return; }
+        addMessage(promptData.prompt, "ai-message");
+    } catch (error) {
+        removeLoading();
+        alert("分析或生成失敗");
     }
-    currentProject = projectName;
-    btn.disabled = false; btn.innerText = "📥 存入風格庫";
-    await loadStyleDb();
-}
-
-async function loadStyleDb() {
-    const projectName = document.getElementById("projectNameInput").value.trim() || currentProject;
-    if (!projectName) return;
-    const response = await fetch("/get_styles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project_name: projectName })
-    });
-    const data = await response.json();
-    const list = document.getElementById("styleDbList");
-    if (!data.styles || data.styles.length === 0) {
-        list.innerHTML = `<p style="font-size:12px; color:#444; padding:8px 0;">尚無風格資料</p>`;
-        return;
-    }
-    list.innerHTML = "";
-    data.styles.forEach(style => {
-        const item = document.createElement("div");
-        item.className = "style-item";
-        item.dataset.id = style.id;
-        const img = document.createElement("img");
-        img.src = style.image_url; img.onerror = () => { img.style.display = "none"; };
-        const info = document.createElement("div");
-        info.className = "style-item-info";
-        info.innerHTML = `<p>🎨 ${style.visual_style || "未知風格"}</p><p>🌈 ${style.color_tone || ""}</p>`;
-        const delBtn = document.createElement("button");
-        delBtn.innerHTML = "🗑"; delBtn.className = "style-item-delete";
-        delBtn.onclick = async () => {
-            await fetch("/delete_style", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: style.id }) });
-            await loadStyleDb();
-        };
-        item.appendChild(img); item.appendChild(info); item.appendChild(delBtn);
-        list.appendChild(item);
-    });
-}
-
-async function generateWithStyle() {
-    const projectName = document.getElementById("projectNameInput").value.trim() || currentProject;
-    if (!projectName) { alert("請先設定專案名稱並存入風格資料"); return; }
-    const btn = document.querySelector(".generate-style-btn");
-    btn.disabled = true; btn.innerText = "⏳ 生成中...";
-    addMessage("🎨 AI 正在根據風格資料庫生成圖片...", "ai-message loading");
-    try {
-        const response = await fetch("/generate_with_style", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ project_name: projectName })
-        });
-        const data = await response.json();
-        removeLoading();
-        if (data.error) { alert("生成失敗：" + data.error); return; }
-        addMessage(`✅ 使用 ${data.style_count} 筆風格資料生成\n提示詞：${data.prompt_used}`, "ai-message");
-        showGeneratedImage(data.image_url, data.prompt_used);
-    } catch (err) { removeLoading(); alert("生成失敗"); }
-    finally { btn.disabled = false; btn.innerText = "🎨 照風格生成圖片"; }
-}
-
-async function blendStyles() {
-    const projectName = document.getElementById("projectNameInput").value.trim() || currentProject;
-    if (!projectName) { alert("請先設定專案名稱"); return; }
-    const styleItems = document.querySelectorAll(".style-item");
-    if (styleItems.length < 2) { alert("風格庫至少需要 2 個風格才能混合"); return; }
-    const styleIds = Array.from(styleItems).map(item => parseInt(item.dataset.id));
-
-    addMessage("🎭 AI 正在混合風格生成圖片...", "ai-message loading");
-    const response = await fetch("/blend_styles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project_name: projectName, style_ids: styleIds })
-    });
-    const data = await response.json();
-    removeLoading();
-    if (data.error) { alert(data.error); return; }
-    addMessage("✅ 混合風格完成！提示詞：\n" + data.prompt_used, "ai-message");
-    showGeneratedImage(data.image_url, data.prompt_used);
-}
-
-async function generateMultiple() {
-    const variantArea = document.getElementById("variantArea");
-    const variantGrid = document.getElementById("variantGrid");
-    variantGrid.innerHTML = "<p style='color:#555; font-size:13px;'>生成中，約需 60~90 秒...</p>";
-    variantArea.style.display = "block";
-    addMessage("🎲 正在生成 4 張變體，請稍候...", "ai-message loading");
-    try {
-        const response = await fetch("/generate_multiple", { method: "POST" });
-        const data = await response.json();
-        removeLoading();
-        if (data.error) { alert("生成失敗：" + data.error); return; }
-        variantGrid.innerHTML = "";
-        data.image_urls.forEach((url, i) => {
-            const wrapper = document.createElement("div");
-            const img = document.createElement("img");
-            img.src = url;
-            img.style.cssText = "width:100%; border-radius:8px; border:1px solid #2a2a2a; cursor:pointer;";
-            img.title = "點擊下載";
-            img.onclick = () => { const a = document.createElement("a"); a.href = url; a.download = `variant_${i+1}_${Date.now()}.webp`; a.target = "_blank"; a.click(); };
-            wrapper.appendChild(img);
-            variantGrid.appendChild(wrapper);
-        });
-        addMessage(`✅ 4 張變體生成完成`, "ai-message");
-    } catch (err) { removeLoading(); alert("生成失敗，請稍後再試"); }
 }
 
 function parseBlueprint(text) {
@@ -870,13 +806,29 @@ function renderBlueprint(text) {
     document.querySelector(".side-panel").style.display = "block";
 }
 
+function cleanBrokenImages() {
+    document.querySelectorAll("img").forEach(img => {
+        img.onerror = function () { this.parentElement?.remove(); };
+        if (!img.complete || img.naturalWidth === 0) img.parentElement?.remove();
+    });
+}
+
 function updateBlueprintTitle(blueprintType) {
     const title = document.getElementById("blueprintTitle");
     const note = document.getElementById("blueprintNote");
-    if (blueprintType === "image") { title.innerText = "目前生成藍圖"; note.innerText = "圖片創作需求會整理成主體、風格、場景與固定規則。"; }
-    else if (blueprintType === "workflow") { title.innerText = "目前流程藍圖"; note.innerText = "自動化需求會整理成流程、痛點、工具與下一步。"; }
-    else if (blueprintType === "startup") { title.innerText = "目前創業藍圖"; note.innerText = "創業需求會整理成客群、痛點、解決方案與 MVP。"; }
-    else { title.innerText = "目前藍圖"; note.innerText = "AI 會依照你的需求自動整理對應藍圖。"; }
+    if (blueprintType === "image") {
+        title.innerText = "目前生成藍圖";
+        note.innerText = "圖片創作需求會整理成主體、風格、場景與固定規則。";
+    } else if (blueprintType === "workflow") {
+        title.innerText = "目前流程藍圖";
+        note.innerText = "自動化需求會整理成流程、痛點、工具與下一步。";
+    } else if (blueprintType === "startup") {
+        title.innerText = "目前創業藍圖";
+        note.innerText = "創業需求會整理成客群、痛點、解決方案與 MVP。";
+    } else {
+        title.innerText = "目前藍圖";
+        note.innerText = "AI 會依照你的需求自動整理對應藍圖。";
+    }
 }
 
 function updateIntentStatus(blueprintType) {
@@ -887,31 +839,160 @@ function updateIntentStatus(blueprintType) {
     else status.innerText = "AI 已判斷：一般需求整理";
 }
 
-function showTemplates() { document.getElementById("templateModal").style.display = "flex"; }
-function hideTemplates() { document.getElementById("templateModal").style.display = "none"; }
-function useTemplate(text) { document.getElementById("messageInput").value = text; hideTemplates(); document.getElementById("messageInput").focus(); }
-
-async function analyzeAndGeneratePrompt() {
-    const firstImage = document.querySelector(".preview-img");
-    if (!firstImage) { alert("請先上傳圖片"); return; }
-    const imageUrl = firstImage.getAttribute("src");
-    try {
-        addMessage("正在分析圖片並建立 Blueprint...", "ai-message loading");
-        const analyzeResponse = await fetch("/analyze_image", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ image_url: imageUrl }) });
-        const analyzeData = await analyzeResponse.json();
-        removeLoading();
-        if (analyzeData.error) { alert(analyzeData.error); return; }
-        document.querySelector(".side-panel").style.display = "block";
-        renderBlueprint(analyzeData.blueprint);
-        addMessage(analyzeData.analysis, "ai-message");
-        addMessage("Blueprint 建立完成，正在產生完整提示詞...", "ai-message loading");
-        const promptResponse = await fetch("/generate_prompt", { method: "POST" });
-        const promptData = await promptResponse.json();
-        removeLoading();
-        if (promptData.error) { alert(promptData.error); return; }
-        addMessage(promptData.prompt, "ai-message");
-    } catch (error) { removeLoading(); alert("分析或生成失敗"); }
+// ── 需求範本 ────────────────────────────────────────
+function showTemplates() {
+    document.getElementById("templateModal").style.display = "flex";
 }
+function hideTemplates() {
+    document.getElementById("templateModal").style.display = "none";
+}
+function useTemplate(text) {
+    document.getElementById("messageInput").value = text;
+    hideTemplates();
+    document.getElementById("messageInput").focus();
+}
+
+// ── 生成 4 張變體 ─────────────────────────────────────
+async function generateMultiple() {
+    const variantArea = document.getElementById("variantArea");
+    const variantGrid = document.getElementById("variantGrid");
+    variantGrid.innerHTML = "<p style='color:#555; font-size:13px;'>生成中，約需 60~90 秒...</p>";
+    variantArea.style.display = "block";
+
+    addMessage("🎲 正在生成 4 張變體，請稍候...", "ai-message loading");
+
+    try {
+        const response = await fetch("/generate_multiple", { method: "POST" });
+        const data = await response.json();
+        removeLoading();
+
+        if (data.error) { alert("生成失敗：" + data.error); return; }
+
+        variantGrid.innerHTML = "";
+        data.image_urls.forEach((url, i) => {
+            const wrapper = document.createElement("div");
+            wrapper.style.cssText = "position:relative;";
+
+            const img = document.createElement("img");
+            img.src = url;
+            img.style.cssText = "width:100%; border-radius:8px; border:1px solid #2a2a2a; cursor:pointer;";
+            img.title = "點擊下載";
+            img.onclick = () => {
+                const a = document.createElement("a");
+                a.href = url; a.download = `variant_${i+1}_${Date.now()}.webp`;
+                a.target = "_blank"; a.click();
+            };
+
+            wrapper.appendChild(img);
+            variantGrid.appendChild(wrapper);
+        });
+
+        addMessage(`✅ 4 張變體生成完成`, "ai-message");
+
+    } catch (err) {
+        removeLoading();
+        alert("生成失敗，請稍後再試");
+    }
+}
+
+
+// ── Mobile Drawer ────────────────────────────────────
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebarDrawer");
+    const overlay = document.getElementById("drawerOverlay");
+    const closeBtn = document.getElementById("sidebarCloseBtn");
+    const blueprint = document.getElementById("blueprintDrawer");
+
+    // 關閉右側
+    blueprint.classList.remove("open");
+
+    const isOpen = sidebar.classList.contains("open");
+    if (isOpen) {
+        sidebar.classList.remove("open");
+        overlay.classList.remove("active");
+        if (closeBtn) closeBtn.style.display = "none";
+    } else {
+        sidebar.classList.add("open");
+        overlay.classList.add("active");
+        if (closeBtn) closeBtn.style.display = "flex";
+    }
+}
+
+function toggleBlueprint() {
+    const blueprint = document.getElementById("blueprintDrawer");
+    const overlay = document.getElementById("drawerOverlay");
+    const sidebar = document.getElementById("sidebarDrawer");
+
+    // 關閉左側
+    sidebar.classList.remove("open");
+    const closeBtn = document.getElementById("sidebarCloseBtn");
+    if (closeBtn) closeBtn.style.display = "none";
+
+    const isOpen = blueprint.classList.contains("open");
+    if (isOpen) {
+        blueprint.classList.remove("open");
+        overlay.classList.remove("active");
+    } else {
+        blueprint.classList.add("open");
+        overlay.classList.add("active");
+    }
+}
+
+function closeAllDrawers() {
+    const sidebar = document.getElementById("sidebarDrawer");
+    const blueprint = document.getElementById("blueprintDrawer");
+    const overlay = document.getElementById("drawerOverlay");
+    const closeBtn = document.getElementById("sidebarCloseBtn");
+
+    sidebar.classList.remove("open");
+    blueprint.classList.remove("open");
+    overlay.classList.remove("active");
+    if (closeBtn) closeBtn.style.display = "none";
+}
+
+// 手機版：存完專案後自動關閉側邊欄
+const _origSaveProject = saveProject;
+async function saveProject() {
+    await _origSaveProject();
+    if (isMobile()) closeAllDrawers();
+}
+
+// 手機版：載入專案後自動關閉側邊欄
+const _origLoadProject = loadProject;
+async function loadProject(projectName) {
+    await _origLoadProject(projectName);
+    if (isMobile()) closeAllDrawers();
+}
+
+// 手機版：生成圖片後自動打開藍圖面板
+const _origShowGeneratedImage = showGeneratedImage;
+function showGeneratedImage(imageUrl, promptUsed) {
+    _origShowGeneratedImage(imageUrl, promptUsed);
+    if (isMobile()) {
+        setTimeout(() => toggleBlueprint(), 400);
+    }
+}
+
+// 視窗改變時重設 drawer 狀態
+window.addEventListener("resize", () => {
+    if (window.innerWidth > 768) {
+        closeAllDrawers();
+    }
+});
+
+// 手機版側邊欄關閉按鈕顯示控制
+window.addEventListener("load", () => {
+    if (isMobile()) {
+        const closeBtn = document.getElementById("sidebarCloseBtn");
+        if (closeBtn) closeBtn.style.display = "none";
+    }
+});
+
 </script>
+
 </body>
 </html>
