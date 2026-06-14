@@ -444,25 +444,30 @@ textarea::placeholder { color: #444; }
 
     /* 三欄變單欄 */
     .app {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr;
+        display: block !important;
         height: 100vh;
         overflow: hidden;
         position: relative;
     }
 
     /* 隱藏 desktop header */
-    .chat-header { display: none; }
+    .chat-header { display: none !important; }
 
     /* 顯示 mobile topbar */
-    .mobile-topbar { display: flex; }
+    .mobile-topbar {
+        display: flex !important;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 30;
+    }
 
     /* 主畫面佔滿 */
     .chat-main {
         height: 100vh;
-        grid-row: 1;
-        grid-column: 1;
+        padding-top: 56px;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 
     /* 縮小 quick actions */
@@ -574,7 +579,5 @@ textarea::placeholder { color: #444; }
     }
     .blueprint-panel.open { transform: translateX(0); }
     .mobile-topbar { display: none; }
-    .drawer-overlay { z-index: 45; }    
-
-    
+    .drawer-overlay { z-index: 45; }
 }
