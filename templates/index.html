@@ -118,7 +118,7 @@
     </main>
 
     <!-- 右側：Blueprint + 風格資料庫 -->
-    <aside class="blueprint-panel side-panel">
+    <aside class="blueprint-panel side-panel" id="blueprintDrawer">
         <div class="drawer-close-btn">
             <h2 id="blueprintTitle">目前生成藍圖</h2>
             <button onclick="closeAllDrawers()">✕ 關閉</button>
@@ -316,7 +316,7 @@ async function sendMessage() {
                     updateBlueprintTitle(blueprintType);
                     updateIntentStatus(blueprintType);
 
-                    document.querySelector(".side-panel").style.display =
+                    document.getElementById("blueprintDrawer").style.display =
                         blueprintType === "image" ? "block" : "none";
 
                     if (json.blueprint && json.blueprint.trim()) {
@@ -767,7 +767,7 @@ async function analyzeAndGeneratePrompt() {
         removeLoading();
         if (analyzeData.error) { alert(analyzeData.error); return; }
 
-        document.querySelector(".side-panel").style.display = "block";
+        document.getElementById("blueprintDrawer").style.display = "block";
         renderBlueprint(analyzeData.blueprint);
         addMessage(analyzeData.analysis, "ai-message");
 
@@ -803,7 +803,7 @@ function renderBlueprint(text) {
     document.getElementById("styleBlueprint").innerText = sections.style;
     document.getElementById("sceneBlueprint").innerText = sections.scene;
     document.getElementById("fixedRules").innerText = sections.fixed;
-    document.querySelector(".side-panel").style.display = "block";
+    document.getElementById("blueprintDrawer").style.display = "block";
 }
 
 function cleanBrokenImages() {
