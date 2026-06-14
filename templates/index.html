@@ -165,7 +165,10 @@
             <div id="previewBox" class="preview-box"></div>
         </div>
 
-        <div id="chatBox" class="chat-box">
+        <div id="chatBox" class="chat-box" style="position:relative;">
+            <div class="chat-watermark">
+                <img src="/static/logo.png" alt="watermark">
+            </div>
             <div class="message-wrapper">
                 <div class="ai-message">你好，我可以幫你把模糊想法整理成清楚的需求、生成藍圖或完整提示詞。請先輸入你的想法。</div>
             </div>
@@ -262,6 +265,29 @@
 </div>
 
 <style>
+.chat-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    max-width: 420px;
+    pointer-events: none;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.chat-watermark img {
+    width: 100%;
+    opacity: 0.07;
+    filter: grayscale(100%);
+    user-select: none;
+    -webkit-user-drag: none;
+}
+/* Make sure messages appear above watermark */
+.message-wrapper { position: relative; z-index: 1; }
+
 /* Changelog */
 .changelog-section { border-bottom: 1px solid #222; }
 .changelog-header { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; cursor:pointer; font-size:12px; color:#777; user-select:none; }
